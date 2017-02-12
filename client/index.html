@@ -1,6 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <head>
+	<link rel="stylesheet" type="text/css" href="/client/main.css"/>
 	<title>Pixi Test</title>
 	<style>
 		/*get rid of margins in window*/
@@ -12,8 +13,10 @@
 <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
 <script>
 
+
 	//Aliases
 	var Container = PIXI.Container,
+		//DisplayContainer = PIXI.DisplayObjectContainer,
 		autoDetectRenderer = PIXI.autoDetectRenderer,
 		loader = PIXI.loader,
 		resources = PIXI.loader.resources,
@@ -23,26 +26,38 @@
 
 	//create pixi stage and renderer and add it to DOM
 	var stage = new PIXI.Container();
-	var renderer = PIXI.autoDetectRenderer(256,256);
+	//create pixi stage and renderer and add it to DOM, then scale by 2 for pixel look
+	// var stage = new PIXI.DisplayObjectContainer();
+	stage.scale.x = 2;
+	stage.scale.y = 2;
+
+
+	var renderer = PIXI.autoDetectRenderer(1024,640);
 	document.body.appendChild(renderer.view);
 
-	//make renderer fullscreen browser
 	renderer.view.style.position = "absolute";
 	renderer.view.style.display = "block";
-	renderer.autoResize = true;
-	renderer.resize(window.innerWidth, window.innerHeight);
+	renderer.view.style.left = "200px";
+	renderer.view.style.top = "50px";
+	// renderer.view.style.width = "1024px";
+	// renderer.view.style.height = "640px";
 
-	window.onresize = function (event) {
-		var w = window.innerWidth;
-		var h = window.innerHeight;
+	//make renderer fullscreen browser
 
-		//resize renderer but keep ratio same
-		renderer.view.style.width = w + "px";
-		renderer.view.style.height = h + "px";
+	// renderer.autoResize = true;
+	// renderer.resize(window.innerWidth, window.innerHeight);
 
-		//adjusts the ratio
-		renderer.resize(w,h);
-	}
+	// window.onresize = function (event) {
+	// 	var w = window.innerWidth;
+	// 	var h = window.innerHeight;
+
+	// 	//resize renderer but keep ratio same
+	// 	renderer.view.style.width = w + "px";
+	// 	renderer.view.style.height = h + "px";
+
+	// 	//adjusts the ratio
+	// 	renderer.resize(w,h);
+	// }
 
 	// function AJAX_JSON_Req( url ) {
 	// 	var AJAX_req = new XMLHttpRequest();
@@ -105,15 +120,15 @@
 		var tileSetTileSize = 16;
 
 		//make sprite out of whole tileset to capture its width/height
-		var tilemapImg = new Sprite(resources.mapTileset.texture);
+		var tilemapImg = new Sprite(resources.mapTilesetTest.texture);
 		
 
 		var tileSetCountX = tilemapImg.width/tileSetTileSize;
 		var tileSetCountY = tilemapImg.height/tileSetTileSize;
 		//console.log(tileSetCountX);
 
-		var texture = TextureCache["mapTileset"];
-		var baseTexture = resources.mapTileset.texture.baseTexture;
+		var texture = TextureCache["mapTilesetTest"];
+		var baseTexture = resources.mapTilesetTest.texture.baseTexture;
 		//console.log(resources);
 
 		// var haha = new Sprite(texture);
@@ -149,12 +164,13 @@
 		}
 		
 
-		$.getJSON('/client/json/grass_dirt_test.json', function(data) {
+		$.getJSON('/client/json/testmap.json', function(data) {
 			
 			var tileCounter = 0;
 			var newTile = [];
 			var newX = 0;
 			var newY = 0;
+			
 			for (var i in data.layers) {
 				console.log("Layer name: " + data.layers[i].name);
 				for (var j in data.layers[i].tiles) {
@@ -171,13 +187,13 @@
 					
 					tileCounter++;
 				}
+				
 
 			}
 			renderer.render(stage);
 			console.log(stage);
 		})
 
-		renderer.render(stage);
 	}
 
 	loadProgressHandler = function(loader, resource) {
@@ -192,14 +208,16 @@
 	  	//console.log("loading: " + resource.name);
 	}
 
-
+	//import textures that keep pixel scale 
+	PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 		//load the images in one array or separate and call a progress handler
 	PIXI.loader
 		.add([
 			{name: 'birdimg', url: "client/img/bird.png"},
 			{name: 'coinSheet', url: "client/img/coin.png"},
 			{name: 'mapTileset', url: "client/img/grass_dirt_tileset.png"},
-			{name: 'walkSheet', url: "client/img/walking.png"}
+			{name: 'walkSheet', url: "client/img/walking.png"},
+			{name: 'mapTilesetTest', url: "client/img/testmap_tileset.png"}
 			])
 		.on("progress", loadProgressHandler)
 		.load(setup);
