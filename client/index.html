@@ -1,0 +1,219 @@
+<!doctype html>
+<meta charset="utf-8">
+<head>
+	<title>Pixi Test</title>
+	<style>
+		/*get rid of margins in window*/
+		* {padding: 0; margin: 0;}
+	</style>
+</head>
+<body>
+<script src="/client/scripts/pixi.js"></script>
+<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<script>
+
+	//Aliases
+	var Container = PIXI.Container,
+		autoDetectRenderer = PIXI.autoDetectRenderer,
+		loader = PIXI.loader,
+		resources = PIXI.loader.resources,
+		TextureCache = PIXI.utils.TextureCache,
+		Sprite = PIXI.Sprite,
+		Rectangle = PIXI.Rectangle
+
+	//create pixi stage and renderer and add it to DOM
+	var stage = new PIXI.Container();
+	var renderer = PIXI.autoDetectRenderer(256,256);
+	document.body.appendChild(renderer.view);
+
+	//make renderer fullscreen browser
+	renderer.view.style.position = "absolute";
+	renderer.view.style.display = "block";
+	renderer.autoResize = true;
+	renderer.resize(window.innerWidth, window.innerHeight);
+
+	window.onresize = function (event) {
+		var w = window.innerWidth;
+		var h = window.innerHeight;
+
+		//resize renderer but keep ratio same
+		renderer.view.style.width = w + "px";
+		renderer.view.style.height = h + "px";
+
+		//adjusts the ratio
+		renderer.resize(w,h);
+	}
+
+	// function AJAX_JSON_Req( url ) {
+	// 	var AJAX_req = new XMLHttpRequest();
+	// 	AJAX_req.open("GET", url, true);
+	// 	AJAX_req.setRequestHeader("Content-type", "application/json");
+
+	// 	AJAX_req.onreadystatechange = function()
+	// 	{
+	// 		if(AJAX_req.readyState == 4 && AJAX_req.status == 200)
+	// 		{
+	// 			var response = JSON.parse( AJAX_req.responseText );
+	// 			document.write( response.name );
+	// 		}
+	// 	}
+	// 	AJAX_req.send();
+	// }
+
+	// AJAX_JSON_Req('/client/json/grass_dirt_test.json');
+
+
+
+
+	//if using loader, create sprite by referencing texture in loader's resources object
+	setup = function() {
+
+		console.log("All files loaded.");
+		//create bird sprite, add to stage, render stage
+		var bird = new Sprite(resources.birdimg.texture);
+		
+		bird.position.set(200, 200);
+		bird.rotation = 0.5;
+		bird.anchor.set(0.5,0.5);
+
+		//SPRITE from Sprite Sheet / Tilesheet
+		//////////////////////////
+		//create tileset from texture
+		var texture = TextureCache["walkSheet"];
+
+		//create rectangle to define sub image
+		var rectangle = new Rectangle(128, 128, 64, 64);
+
+		//tell texture to use rectangle area
+		texture.frame = rectangle;
+
+		//create sprite from texture
+		var walkDownFrame3 = new Sprite(texture);
+
+		//position sprite
+		walkDownFrame3.x = 400;
+		walkDownFrame3.y = 100;
+
+		//stage.addChild(walkDownFrame3);
+
+		//stage.addChild(bird);
+
+
+		var posX = 0;
+		var posY = 0;
+
+		var tileSetTileSize = 16;
+
+		//make sprite out of whole tileset to capture its width/height
+		var tilemapImg = new Sprite(resources.mapTileset.texture);
+		
+
+		var tileSetCountX = tilemapImg.width/tileSetTileSize;
+		var tileSetCountY = tilemapImg.height/tileSetTileSize;
+		//console.log(tileSetCountX);
+
+		var texture = TextureCache["mapTileset"];
+		var baseTexture = resources.mapTileset.texture.baseTexture;
+		//console.log(resources);
+
+		// var haha = new Sprite(texture);
+		// stage.addChild(haha);
+
+		var tilesetTiles = [];
+		var indexCount = 0;
+		var rect = [];
+
+		var rects = [];
+		var frameTextures = [];
+		
+		for (var i = 0; i<tileSetCountY; i++) {
+			rect[i] = new Array(tileSetCountX);
+			//console.log(rect);
+			for (var j = 0; j<tileSetCountX; j++) {
+
+				rect[i][j] = new Rectangle(posX, posY, tileSetTileSize, tileSetTileSize);
+				frameTexture = new PIXI.Texture(baseTexture, rect[i][j]);
+
+				frameTextures[indexCount] = new PIXI.Texture(baseTexture, rect[i][j]);				
+
+				tilesetTiles[indexCount] = new Sprite(frameTexture);
+
+				tilesetTiles[indexCount].position.set(posX, posY);
+				//stage.addChild(tilesetTiles[indexCount]);
+					
+				posX += tileSetTileSize;
+				indexCount++;
+			}
+			posX = 0;
+			posY += tileSetTileSize;
+		}
+		
+
+		$.getJSON('/client/json/grass_dirt_test.json', function(data) {
+			
+			var tileCounter = 0;
+			var newTile = [];
+			var newX = 0;
+			var newY = 0;
+			for (var i in data.layers) {
+				console.log("Layer name: " + data.layers[i].name);
+				for (var j in data.layers[i].tiles) {
+					var tileIndex = data.layers[i].tiles[j].tile;
+				
+					newTile[tileCounter] = new Sprite(frameTextures[tileIndex]);
+
+					newX = data.layers[i].tiles[j].x * tileSetTileSize;
+					newY = data.layers[i].tiles[j].y * tileSetTileSize;
+
+					newTile[tileCounter].position.set(newX, newY);
+				
+					stage.addChild(newTile[tileCounter]);
+					
+					tileCounter++;
+				}
+
+			}
+			renderer.render(stage);
+			console.log(stage);
+		})
+
+		renderer.render(stage);
+	}
+
+	loadProgressHandler = function(loader, resource) {
+		//display the file url currently being loaded
+		console.log("loading: " + resource.url);
+
+		//display the % of files currently loaded
+		console.log("progress: " + loader.progress + "%");
+
+		//If you gave your files names as the first argument 
+		//of the `add` method, you can access them like this
+	  	//console.log("loading: " + resource.name);
+	}
+
+
+		//load the images in one array or separate and call a progress handler
+	PIXI.loader
+		.add([
+			{name: 'birdimg', url: "client/img/bird.png"},
+			{name: 'coinSheet', url: "client/img/coin.png"},
+			{name: 'mapTileset', url: "client/img/grass_dirt_tileset.png"},
+			{name: 'walkSheet', url: "client/img/walking.png"}
+			])
+		.on("progress", loadProgressHandler)
+		.load(setup);
+
+
+	// //make new sprite
+	// var texture = PIXI.utils.TextureCache["img/bird.png"];
+	// var sprite = new PIXI.Sprite(
+	// 	PIXI.loader.resources["img/bird.png"].texture
+	// 	);
+
+
+</script>
+
+</body>
+
+
