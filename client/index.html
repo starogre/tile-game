@@ -166,20 +166,38 @@
 
 		$.getJSON('/client/json/testmap.json', function(data) {
 			
-			var tileCounter = 0;
-			var newTile = [];
-			var newX = 0;
-			var newY = 0;
+			var layers = data.layers;
 			
-			for (var i in data.layers) {
-				console.log("Layer name: " + data.layers[i].name);
-				for (var j in data.layers[i].tiles) {
-					var tileIndex = data.layers[i].tiles[j].tile;
+
+			//asks for specific layer names in layers array to be rendered in such order
+			findLayer("layer_ground", layers);
+			findLayer("layer_envbot", layers);
+			findLayer("layer_envtop", layers);
+			
+			//match layer name then call render layer
+			function findLayer(layerName, layers) {
+				layers.map(function(layer) {
+					if(layer.name == layerName) {
+						
+						return renderLayer(layer);
+					}
+				})
+			}
+
+			//logic to call a specific layer object and loop through and render its tiles
+			function renderLayer(layer) {
+				var tileCounter = 0;
+				var newTile = [];
+				var newX = 0;
+				var newY = 0;
+
+				for (var j in layer.tiles) {
+					var tileIndex = layer.tiles[j].tile;
 				
 					newTile[tileCounter] = new Sprite(frameTextures[tileIndex]);
 
-					newX = data.layers[i].tiles[j].x * tileSetTileSize;
-					newY = data.layers[i].tiles[j].y * tileSetTileSize;
+					newX = layer.tiles[j].x * tileSetTileSize;
+					newY = layer.tiles[j].y * tileSetTileSize;
 
 					newTile[tileCounter].position.set(newX, newY);
 				
@@ -187,11 +205,31 @@
 					
 					tileCounter++;
 				}
+
+				renderer.render(stage);
+			}
+			// old code that rendered all layers from top to bottom of json file
+			// for (var i in data.layers) {
+			// 	console.log("Layer name: " + data.layers[i].name);
+			// 	for (var j in data.layers[i].tiles) {
+			// 		var tileIndex = data.layers[i].tiles[j].tile;
+				
+			// 		newTile[tileCounter] = new Sprite(frameTextures[tileIndex]);
+
+			// 		newX = data.layers[i].tiles[j].x * tileSetTileSize;
+			// 		newY = data.layers[i].tiles[j].y * tileSetTileSize;
+
+			// 		newTile[tileCounter].position.set(newX, newY);
+				
+			// 		stage.addChild(newTile[tileCounter]);
+					
+			// 		tileCounter++;
+			// 	}
 				
 
-			}
-			renderer.render(stage);
-			console.log(stage);
+			// }
+			// renderer.render(stage);
+			// console.log(stage);
 		})
 
 	}
