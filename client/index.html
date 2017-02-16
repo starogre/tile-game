@@ -8,6 +8,9 @@
 		* {padding: 0; margin: 0;}
 	</style>
 </head>
+
+
+
 <body>
 <script src="/client/scripts/pixi.js"></script>
 <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
@@ -59,26 +62,6 @@
 	// 	renderer.resize(w,h);
 	// }
 
-	// function AJAX_JSON_Req( url ) {
-	// 	var AJAX_req = new XMLHttpRequest();
-	// 	AJAX_req.open("GET", url, true);
-	// 	AJAX_req.setRequestHeader("Content-type", "application/json");
-
-	// 	AJAX_req.onreadystatechange = function()
-	// 	{
-	// 		if(AJAX_req.readyState == 4 && AJAX_req.status == 200)
-	// 		{
-	// 			var response = JSON.parse( AJAX_req.responseText );
-	// 			document.write( response.name );
-	// 		}
-	// 	}
-	// 	AJAX_req.send();
-	// }
-
-	// AJAX_JSON_Req('/client/json/grass_dirt_test.json');
-
-
-
 
 	//if using loader, create sprite by referencing texture in loader's resources object
 	setup = function() {
@@ -113,126 +96,127 @@
 
 		//stage.addChild(bird);
 
-
-		var posX = 0;
-		var posY = 0;
-
-		var tileSetTileSize = 16;
-
-		//make sprite out of whole tileset to capture its width/height
-		var tilemapImg = new Sprite(resources.mapTilesetTest.texture);
-		
-
-		var tileSetCountX = tilemapImg.width/tileSetTileSize;
-		var tileSetCountY = tilemapImg.height/tileSetTileSize;
-		//console.log(tileSetCountX);
-
-		var texture = TextureCache["mapTilesetTest"];
-		var baseTexture = resources.mapTilesetTest.texture.baseTexture;
-		//console.log(resources);
-
-		// var haha = new Sprite(texture);
-		// stage.addChild(haha);
-
-		var tilesetTiles = [];
-		var indexCount = 0;
-		var rect = [];
-
-		var rects = [];
-		var frameTextures = [];
-		
-		for (var i = 0; i<tileSetCountY; i++) {
-			rect[i] = new Array(tileSetCountX);
-			//console.log(rect);
-			for (var j = 0; j<tileSetCountX; j++) {
-
-				rect[i][j] = new Rectangle(posX, posY, tileSetTileSize, tileSetTileSize);
-				frameTexture = new PIXI.Texture(baseTexture, rect[i][j]);
-
-				frameTextures[indexCount] = new PIXI.Texture(baseTexture, rect[i][j]);				
-
-				tilesetTiles[indexCount] = new Sprite(frameTexture);
-
-				tilesetTiles[indexCount].position.set(posX, posY);
-				//stage.addChild(tilesetTiles[indexCount]);
-					
-				posX += tileSetTileSize;
-				indexCount++;
-			}
-			posX = 0;
-			posY += tileSetTileSize;
+		//define sample field map in setup after resources have loaded
+		var fieldMap = {
+			name: "mapTilesetTest",
+			resource: resources.mapTilesetTest,
+			tileSize: 16,
 		}
-		
 
-		$.getJSON('/client/json/testmap.json', function(data) {
-			
-			var layers = data.layers;
+		drawMap(fieldMap);
+	}
+
+
+
+	function tileSetToMap(tileMapObj, tileMapStr, tileSize) {
+			var posX = 0;
+			var posY = 0;
+
+			var tileSetTileSize = tileSize;
+			var tileSetMap = tileMapObj;
+			var tileSetStr = tileMapStr;
+
+			//make sprite out of whole tileset to capture its width/height
+			var tilemapImg = new Sprite(tileSetMap.texture);
 			
 
-			//asks for specific layer names in layers array to be rendered in such order
-			findLayer("layer_ground", layers);
-			findLayer("layer_envbot", layers);
-			findLayer("layer_envtop", layers);
+			var tileSetCountX = tilemapImg.width/tileSetTileSize;
+			var tileSetCountY = tilemapImg.height/tileSetTileSize;
+			//console.log(tileSetCountX);
+
+			var texture = TextureCache[tileSetStr];
+			var baseTexture = tileSetMap.texture.baseTexture;
+			//console.log(resources);
+
+
+			var tilesetTiles = [];
+			var indexCount = 0;
+			var rect = [];
+
+			var rects = [];
+			var frameTextures = [];
 			
-			//match layer name then call render layer
-			function findLayer(layerName, layers) {
-				layers.map(function(layer) {
-					if(layer.name == layerName) {
+			for (var i = 0; i<tileSetCountY; i++) {
+				rect[i] = new Array(tileSetCountX);
+				//console.log(rect);
+				for (var j = 0; j<tileSetCountX; j++) {
+
+					rect[i][j] = new Rectangle(posX, posY, tileSetTileSize, tileSetTileSize);
+					frameTexture = new PIXI.Texture(baseTexture, rect[i][j]);
+
+					frameTextures[indexCount] = new PIXI.Texture(baseTexture, rect[i][j]);				
+
+					tilesetTiles[indexCount] = new Sprite(frameTexture);
+
+					tilesetTiles[indexCount].position.set(posX, posY);
 						
-						return renderLayer(layer);
-					}
-				})
+					posX += tileSetTileSize;
+					indexCount++;
+				}
+				posX = 0;
+				posY += tileSetTileSize;
 			}
 
-			//logic to call a specific layer object and loop through and render its tiles
-			function renderLayer(layer) {
-				var tileCounter = 0;
-				var newTile = [];
-				var newX = 0;
-				var newY = 0;
+			return frameTextures;
 
-				for (var j in layer.tiles) {
-					var tileIndex = layer.tiles[j].tile;
+		}
+
+
+		
+		function drawMap(map) {
+
+			var frameTextures = tileSetToMap(map.resource, map.name, map.tileSize);
+
+			$.getJSON('/client/json/testmap.json', function(data) {
 				
-					newTile[tileCounter] = new Sprite(frameTextures[tileIndex]);
-
-					newX = layer.tiles[j].x * tileSetTileSize;
-					newY = layer.tiles[j].y * tileSetTileSize;
-
-					newTile[tileCounter].position.set(newX, newY);
+				var layers = data.layers;
 				
-					stage.addChild(newTile[tileCounter]);
-					
-					tileCounter++;
+
+				//asks for specific layer names in layers array to be rendered in such order
+				findLayer("layer_ground", layers);
+				findLayer("layer_envbot", layers);
+				findLayer("layer_envtop", layers);
+				
+				//match layer name then call render layer
+				function findLayer(layerName, layers) {
+					layers.map(function(layer) {
+						if(layer.name == layerName) {
+							
+							return renderLayer(layer);
+						}
+					})
 				}
 
-				renderer.render(stage);
-			}
-			// old code that rendered all layers from top to bottom of json file
-			// for (var i in data.layers) {
-			// 	console.log("Layer name: " + data.layers[i].name);
-			// 	for (var j in data.layers[i].tiles) {
-			// 		var tileIndex = data.layers[i].tiles[j].tile;
-				
-			// 		newTile[tileCounter] = new Sprite(frameTextures[tileIndex]);
+				//logic to call a specific layer object and loop through and render its tiles
+				function renderLayer(layer) {
+					var tileCounter = 0;
+					var newTile = [];
+					var newX = 0;
+					var newY = 0;
 
-			// 		newX = data.layers[i].tiles[j].x * tileSetTileSize;
-			// 		newY = data.layers[i].tiles[j].y * tileSetTileSize;
-
-			// 		newTile[tileCounter].position.set(newX, newY);
-				
-			// 		stage.addChild(newTile[tileCounter]);
+					for (var j in layer.tiles) {
+						var tileIndex = layer.tiles[j].tile;
 					
-			// 		tileCounter++;
-			// 	}
+						newTile[tileCounter] = new Sprite(frameTextures[tileIndex]);
+
+						var tileWidth = newTile[tileCounter].width;
+
+						newX = layer.tiles[j].x * tileWidth;
+						newY = layer.tiles[j].y * tileWidth;
+
+						newTile[tileCounter].position.set(newX, newY);
+					
+						stage.addChild(newTile[tileCounter]);
+						
+						tileCounter++;
+					}
+
+					renderer.render(stage);
+				}
 				
+			})
 
-			// }
-			// renderer.render(stage);
-			// console.log(stage);
-		})
-
-	}
+		}
 
 	loadProgressHandler = function(loader, resource) {
 		//display the file url currently being loaded
@@ -266,6 +250,11 @@
 	// var sprite = new PIXI.Sprite(
 	// 	PIXI.loader.resources["img/bird.png"].texture
 	// 	);
+
+	setInterval(function() {
+
+		//drawMap(fieldMap);
+	}, 40) //25 fps
 
 
 </script>
