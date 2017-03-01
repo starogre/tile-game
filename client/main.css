@@ -1,3 +1,26 @@
 body {
 	background-color:#aaffd7;
 }
+
+a {
+	font-family: "Arial";
+	font-size: 0.8em;
+	color: darkblue;
+	text-align: center;
+	align-content: center;
+	text-decoration: none;
+}
+
+a:hover {
+	color: hotpink;
+}
+
+
+.sourcelink {
+	position:fixed;
+	top: 700px;
+	left: 48%;
+	width: 200px;
+	display: block;
+	margin: 0 auto;
+}
